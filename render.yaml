@@ -1,11 +1,22 @@
-# render.yaml
-services:
-  - type: web
-    name: reader
-    env: java
-    plan: starter
-    buildCommand: mvn package
-    startCommand: java -jar target/reader-0.0.1-SNAPSHOT.jar
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
+# A web service that runs the reader app
+- type: web
+  name: reader
+  runtime: python
+  repo: https://github.com/wojiushixgg/reader.git
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn -w 4 -b :10000 app:app
+  envVars:
+    - key: SECRET_KEY
+      generateValue: true # will generate a base64-encoded 256-bit secret
+    - key: SQLALCHEMY_DATABASE_URI
+      fromDatabase:
+        name: reader-db
+        property: connectionString
+  disk:
+    name: data
+    mountPath: /data
+    sizeGB: 10 # optional
+
+# A PostgreSQL database for the reader app
+- type: postgres
+  name: reader-db
